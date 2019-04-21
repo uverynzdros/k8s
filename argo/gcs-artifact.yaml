@@ -1,0 +1,33 @@
+# This example demonstrates the ability to pass artifacts
+# from one step to the next.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: artifact-passing-
+spec:
+  entrypoint: artifact-example
+  templates:
+  - name: artifact-example
+    steps:
+    - - name: generate-artifact
+        template: whalesay
+
+  - name: whalesay
+    container:
+      image: docker/whalesay:latest
+      command: [sh, -c]
+      args: ['sleep 1; cowsay hello world | tee /tmp/hello_world.txt']
+    outputs:
+      artifacts:
+      - name: hello-art
+        path: /tmp/hello_world.txt
+        s3:
+          endpoint: storage.googleapis.com
+          bucket: unified-hull-238306-argo
+          key: hello-art.tgz
+          accessKeySecret:
+            name: argo-gcs-credentials-v1
+            key: argo-gcs-access-key
+          secretKeySecret:
+            name: argo-gcs-credentials-v1
+            key: argo-gcs-secret-key
